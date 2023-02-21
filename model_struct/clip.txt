@@ -1,0 +1,155 @@
+CLIP(
+  (text_transformer): TextTransformer(
+    (token_emb): Embedding(49408, 512)
+    (abs_pos_emb): Embedding(256, 512)
+    (transformer): Transformer(
+      (layers): ModuleList(
+        (0): ModuleList(
+          (0): PreNorm(
+            (norm): LayerNorm()
+            (fn): Attention(
+              (to_qkv): Linear(in_features=512, out_features=1536, bias=False)
+              (to_out): Sequential(
+                (0): Linear(in_features=512, out_features=512, bias=False)
+                (1): LayerNorm()
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (1): PreNorm(
+            (norm): LayerNorm()
+            (fn): FeedForward(
+              (net): Sequential(
+                (0): Linear(in_features=512, out_features=4096, bias=False)
+                (1): GEGLU()
+                (2): LayerNorm()
+                (3): Dropout(p=0.0, inplace=False)
+                (4): Linear(in_features=2048, out_features=512, bias=False)
+              )
+            )
+          )
+        )
+      )
+      (norm_in): LayerNorm()
+      (norm_out): LayerNorm()
+    )
+  )
+  (visual_transformer): VisionTransformer(
+    (to_tokens): Sequential(
+      (0): Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=32, p2=32)
+      (1): Linear(in_features=3072, out_features=512, bias=True)
+    )
+    (pos_emb): Embedding(64, 512)
+    (patch_dropout): PatchDropout()
+    (transformer): Transformer(
+      (layers): ModuleList(
+        (0): ModuleList(
+          (0): PreNorm(
+            (norm): LayerNorm()
+            (fn): Attention(
+              (to_qkv): Linear(in_features=512, out_features=1536, bias=False)
+              (to_out): Sequential(
+                (0): Linear(in_features=512, out_features=512, bias=False)
+                (1): LayerNorm()
+              )
+              (dropout): Dropout(p=0.0, inplace=False)
+            )
+          )
+          (1): PreNorm(
+            (norm): LayerNorm()
+            (fn): FeedForward(
+              (net): Sequential(
+                (0): Linear(in_features=512, out_features=4096, bias=False)
+                (1): GEGLU()
+                (2): LayerNorm()
+                (3): Dropout(p=0.0, inplace=False)
+                (4): Linear(in_features=2048, out_features=512, bias=False)
+              )
+            )
+          )
+        )
+      )
+      (norm_in): LayerNorm()
+      (norm_out): LayerNorm()
+    )
+    (to_cls_tokens): Sequential(
+      (0): Reduce('b n d -> b d', 'mean')
+      (1): Linear(in_features=512, out_features=512, bias=False)
+      (2): Rearrange('b d -> b 1 d')
+    )
+  )
+  (visual_ssl): SimCLR(
+    (net): NetWrapper(
+      (net): VisionTransformer(
+        (to_tokens): Sequential(
+          (0): Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=32, p2=32)
+          (1): Linear(in_features=3072, out_features=512, bias=True)
+        )
+        (pos_emb): Embedding(64, 512)
+        (patch_dropout): PatchDropout()
+        (transformer): Transformer(
+          (layers): ModuleList(
+            (0): ModuleList(
+              (0): PreNorm(
+                (norm): LayerNorm()
+                (fn): Attention(
+                  (to_qkv): Linear(in_features=512, out_features=1536, bias=False)
+                  (to_out): Sequential(
+                    (0): Linear(in_features=512, out_features=512, bias=False)
+                    (1): LayerNorm()
+                  )
+                  (dropout): Dropout(p=0.0, inplace=False)
+                )
+              )
+              (1): PreNorm(
+                (norm): LayerNorm()
+                (fn): FeedForward(
+                  (net): Sequential(
+                    (0): Linear(in_features=512, out_features=4096, bias=False)
+                    (1): GEGLU()
+                    (2): LayerNorm()
+                    (3): Dropout(p=0.0, inplace=False)
+                    (4): Linear(in_features=2048, out_features=512, bias=False)
+                  )
+                )
+              )
+            )
+          )
+          (norm_in): LayerNorm()
+          (norm_out): LayerNorm()
+        )
+        (to_cls_tokens): Sequential(
+          (0): Reduce('b n d -> b d', 'mean')
+          (1): Linear(in_features=512, out_features=512, bias=False)
+          (2): Rearrange('b d -> b 1 d')
+        )
+      )
+      (projector): Sequential(
+        (0): Linear(in_features=512, out_features=4096, bias=False)
+        (1): BatchNorm1d(4096, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU(inplace=True)
+        (3): Linear(in_features=4096, out_features=4096, bias=False)
+        (4): BatchNorm1d(4096, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (5): ReLU(inplace=True)
+        (6): Linear(in_features=4096, out_features=128, bias=False)
+        (7): BatchNorm1d(128, eps=1e-05, momentum=0.1, affine=False, track_running_stats=True)
+      )
+    )
+    (augment): Sequential(
+      (0): RandomApply(
+        (fn): ColorJitter(brightness=[0.19999999999999996, 1.8], contrast=[0.19999999999999996, 1.8], saturation=[0.19999999999999996, 1.8], hue=[-0.2, 0.2])
+      )
+      (1): RandomGrayscale(p=0.2)
+      (2): RandomHorizontalFlip(p=0.5)
+      (3): RandomApply(
+        (fn): GaussianBlur(kernel_size=(3, 3), sigma=(1.0, 2.0))
+      )
+      (4): RandomResizedCrop(size=(256, 256), scale=(0.08, 1.0), ratio=(0.75, 1.3333), interpolation=bilinear), antialias=None)
+      (5): Normalize(mean=tensor([0.4850, 0.4560, 0.4060]), std=tensor([0.2290, 0.2240, 0.2250]))
+    )
+  )
+  (to_text_latent): Linear(in_features=512, out_features=512, bias=False)
+  (to_visual_latent): Linear(in_features=512, out_features=512, bias=False)
+  (to_text_latent_extra): Linear(in_features=512, out_features=512, bias=False)
+  (to_visual_latent_extra): Linear(in_features=512, out_features=512, bias=False)
+)
